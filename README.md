@@ -6,6 +6,12 @@ How to run?
 ---
  - docker-compose up --build
  - visit localhost:8080
+ - TODO endpoint for scrapper
+
+ Localy
+ ---
+ - Move into scrappers dir
+ - scrapy runspider {scarrper}.py
 
 How to use?
 ---
@@ -13,3 +19,7 @@ How to use?
  - import and use them in server.py
  - add routes to to the usages
  - profit
+
+Misc
+---
+ - On windows might be needed: pip install pypiwin32
