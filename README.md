@@ -23,3 +23,9 @@ How to use?
 Misc
 ---
  - On windows might be needed: pip install pypiwin32
+
+Limitations
+ - Can't get VIN/Registration/Phone/E-mail as those are AJAX calls
+
+Final thoughts
+ - Should use selenium or similar
