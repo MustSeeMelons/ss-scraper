@@ -17,7 +17,9 @@ Misc
  - On windows might be needed: pip install pypiwin32
 
 Limitations
+---
  - Can't get VIN/Registration/Phone/E-mail as those are AJAX calls
 
 Machine Learning
+---
  - Requires Anaconda with Spyder IDE
