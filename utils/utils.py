@@ -10,7 +10,6 @@ else:
 start = 0
 
 def startTimer():
-    nonlocal start
     start = default_timer()
 
 def endTimer():

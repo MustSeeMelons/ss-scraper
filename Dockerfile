@@ -6,6 +6,10 @@ ADD output/sample.json /home/output/
 
 RUN pip install scrapy
 RUN pip install pyramid
+RUN pip install console-menu
+RUN pip install numpy
+RUN pip install matplotlib
+RUN pip install pandas
 
 CMD [ "python", "./home/server.py" ]
 
