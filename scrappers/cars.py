@@ -10,7 +10,7 @@ from scrapy.utils.project import get_project_settings
 import csv
 from abc import ABC, abstractmethod
 
-from utils.utils import startTimer, endTimer
+from utils.utils import startTimer, endTimer, Sanitizer
 
 
 class SingleCar(scrapy.Spider):
@@ -39,7 +39,7 @@ class SingleCar(scrapy.Spider):
         with open(self.fileName, 'a', newline='', encoding='utf8') as f:
             writer = csv.writer(f)
             writer.writerow(['make', 'desc', 'year', 'engine',
-                             'gearbox', 'mileage', 'ta', 'price', 'link'])
+                             'gearbox', 'mileage', 'body', 'ta', 'price', 'location', 'link'])
 
         return [scrapy.FormRequest(self.startUrl)]
 
@@ -58,13 +58,15 @@ class SingleCar(scrapy.Spider):
 
     def parseCar(self, response):
         DESC_XPATH = './/div[contains(@id, \"msg_div_msg\")]/text()'
-        MAKE_XPATH = './/td[contains(@id, \"tdo_31\")]/b/text()'
+        MAKE_XPATH = './/td[contains(@id, \"tdo_31\")]/b/text()|.//td[contains(@id, \"tdo_24\")]/b/text()'
         YEAR_XPATH = './/td[contains(@id, \"tdo_18\")]/text()'
         ENGINE_XPATH = './/td[contains(@id, \"tdo_15\")]/text()'
         GEARBOX_XPATH = './/td[contains(@id, \"tdo_35\")]/text()'
         MILEAGE_XPATH = './/td[contains(@id, \"tdo_16\")]/text()'
         TA_XPATH = './/td[contains(@id, \"tdo_223\")]/text()'
         PRICE_XPATH = './/td[contains(@id, \"tdo_8\")]/text()|.//span[contains(@id, \"tdo_8\")]/text()'
+        BODY_XPATH = './/td[contains(@id, \"tdo_32\")]/text()'
+        LOCATION_XPATH = './/td[@class=\"ads_contacts\"]/text()'
 
         # Description
         arr = response.xpath(DESC_XPATH).extract()  # Array of lines of text
@@ -78,29 +80,34 @@ class SingleCar(scrapy.Spider):
         # Make
         make = response.xpath(MAKE_XPATH).extract_first()
         # Year
-        year = response.xpath(YEAR_XPATH).extract_first()
+        year = Sanitizer.sanitizeDate(
+            response.xpath(YEAR_XPATH).extract_first())
         # Engine
         engine = response.xpath(ENGINE_XPATH).extract_first()
         # Gearbox
         gearbox = response.xpath(GEARBOX_XPATH).extract_first()
         # Mileage
-        mileage = response.xpath(MILEAGE_XPATH).extract_first()
+        mileage = Sanitizer.sanitizeMileage(
+            response.xpath(MILEAGE_XPATH).extract_first())
         # TA
-        ta = ''
-        taExtract = response.xpath(TA_XPATH).extract_first()
-        try:
-            ta = '{:06.4f}'.format(taExtract)
-        except:
-            ta = str(taExtract)
-
+        ta = Sanitizer.sanitizeInspection(
+            response.xpath(TA_XPATH).extract_first())
         # Price
-        price = response.xpath(PRICE_XPATH).extract_first()
+        price = Sanitizer.sanitizePrice(
+            response.xpath(PRICE_XPATH).extract_first())
+        # Body
+        body = response.xpath(BODY_XPATH).extract_first()
+        # Location
+        contacts = response.xpath(LOCATION_XPATH).extract()
+        location = next(
+            contact for contact in contacts if contact != None and contact != ' ')
 
-        file = open(self.fileName, 'a', newline='', encoding='utf8')
-        writer = csv.writer(file)
-        writer.writerow([make, desc, year, engine, gearbox,
-                         mileage, ta, price, response.request.url])
-        file.close()
+        if Sanitizer.isCarValid(make, price, ta):
+            file = open(self.fileName, 'a', newline='', encoding='utf8')
+            writer = csv.writer(file)
+            writer.writerow([make, desc, year, engine, gearbox,
+                             mileage, body, ta, price, location, response.request.url])
+            file.close()
 
 
 class AllCars(SingleCar):
