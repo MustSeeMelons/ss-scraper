@@ -41,7 +41,7 @@ class SingleCar(scrapy.Spider):
 
         with open(self.fileName, 'a', newline='', encoding='utf8') as f:
             writer = csv.writer(f)
-            writer.writerow(['make', 'desc', 'year', 'engine', 'engine type'
+            writer.writerow(['make', 'desc', 'year', 'engine', 'engine type',
                              'gearbox', 'mileage', 'body', 'ta', 'price', 'location', 'link'])
 
         return [scrapy.FormRequest(self.startUrl)]
