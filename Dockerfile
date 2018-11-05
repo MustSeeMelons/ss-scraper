@@ -10,6 +10,7 @@ RUN pip install console-menu
 RUN pip install numpy
 RUN pip install matplotlib
 RUN pip install pandas
+RUN pip install flask
 
 CMD [ "python", "./home/server.py" ]
 

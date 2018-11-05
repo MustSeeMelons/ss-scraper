@@ -12,7 +12,6 @@ from abc import ABC, abstractmethod
 
 from utils.utils import startTimer, endTimer, Sanitizer
 
-
 class SingleCar(scrapy.Spider):
     name = 'car'
     startUrl = 'https://www.ss.com/lv/transport/cars/'
@@ -22,14 +21,18 @@ class SingleCar(scrapy.Spider):
     def get_name(self):
         pass
 
-    def __init__(self):
+    def __init__(self, callback = None):
         startTimer()
         self.name = self.get_name()
         self.startUrl = self.startUrl + self.name + '/'
         dispatcher.connect(self.spider_closed, signals.spider_closed)
+        self.callback = callback
 
     def spider_closed(self, spider):
         endTimer()
+        if self.callback != None:
+            print(self.fileName)
+            self.callback()
 
     def start_requests(self):
         dt = datetime.now()
@@ -38,7 +41,7 @@ class SingleCar(scrapy.Spider):
 
         with open(self.fileName, 'a', newline='', encoding='utf8') as f:
             writer = csv.writer(f)
-            writer.writerow(['make', 'desc', 'year', 'engine',
+            writer.writerow(['make', 'desc', 'year', 'engine', 'engine type'
                              'gearbox', 'mileage', 'body', 'ta', 'price', 'location', 'link'])
 
         return [scrapy.FormRequest(self.startUrl)]
@@ -82,8 +85,17 @@ class SingleCar(scrapy.Spider):
         # Year
         year = Sanitizer.sanitizeDate(
             response.xpath(YEAR_XPATH).extract_first())
-        # Engine
-        engine = response.xpath(ENGINE_XPATH).extract_first()
+
+        # Engine & engine type
+        engine = None
+        engineType = None
+        engine_str = response.xpath(ENGINE_XPATH).extract_first()
+        if engine_str != None:
+            split = engine_str.split()
+            engine = split[0]
+            if len(split) > 1:
+                engineType = split[1]
+
         # Gearbox
         gearbox = response.xpath(GEARBOX_XPATH).extract_first()
         # Mileage
@@ -105,7 +117,7 @@ class SingleCar(scrapy.Spider):
         if Sanitizer.isCarValid(make, price, ta):
             file = open(self.fileName, 'a', newline='', encoding='utf8')
             writer = csv.writer(file)
-            writer.writerow([make, desc, year, engine, gearbox,
+            writer.writerow([make, desc, year, engine, engineType, gearbox,
                              mileage, body, ta, price, location, response.request.url])
             file.close()
 
@@ -125,8 +137,9 @@ class AllCars(SingleCar):
         '/lv/transport/service-centers-and-checkup/tuning/'
     ])
 
-    def __init__(self):
+    def __init__(self, callback = None):
         dispatcher.connect(self.spider_closed, signals.spider_closed)
+        self.callback = callback
 
     def parse(self, response):
         BRAND_XPATH = './/h4[contains(@id, \"sc_\")]/a'
@@ -165,6 +178,15 @@ def scrape(scraper):
     process = CrawlerProcess(get_project_settings())
     process.crawl(scraper)
     process.start()
+
+def threadedScraper(scraper):
+    process = CrawlerProcess(get_project_settings())
+    process.crawl(scraper)
+    
+    def start():
+        process.start()
+    
+    return start
 
 # A lot of small classes follow, one for each car brand
 
